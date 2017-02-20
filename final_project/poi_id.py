@@ -61,6 +61,7 @@ for name in data_dict:
 
 # add created features to list
 added_features = ["bonus_to_salary"]
+# added_features = [] # uncomment to just use default features
 
 for feature in added_features:
     features_list.append(feature)
@@ -122,7 +123,7 @@ def trainTestClassifier(features_train, labels_train, clf_type, params):
 
     # uncomment for non-pca
     # estimator = []
-    estimator = [('pca',PCA(n_components=11))]
+    estimator = [('pca',PCA(n_components=1))]
 
     estimator.append( (clf_type, classifiers[clf_type]) )
 
