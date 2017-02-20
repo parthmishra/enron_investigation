@@ -123,19 +123,23 @@ def trainTestClassifier(features_train, labels_train, clf_type, params):
 
     # uncomment for non-pca
     # estimator = []
-    estimator = [('pca',PCA(n_components=1))]
+    pca = PCA(n_components=19)
+    estimator = [('pca',pca)]
 
     estimator.append( (clf_type, classifiers[clf_type]) )
 
     pipeline = Pipeline(estimator)
+    pca_step = pipeline.named_steps['pca']
+
 
     clf = GridSearchCV(pipeline, param_grid=params, scoring="f1")
-    clf = clf.fit(features_train, labels_train)
+    clf.fit(features_train, labels_train)
+    exp_var = clf.best_estimator_.named_steps['pca'].explained_variance_
     best_params = clf.best_params_
     clf = clf.best_estimator_
 
 
-    return clf, best_params
+    return clf, best_params, exp_var
 
 
 
@@ -156,10 +160,10 @@ classifiers = {
 
 best_clf = None
 best_f1 = 0
-
+exp_var = []
 
 for clf_type, clf_params in classifiers.iteritems():
-        clf, params = trainTestClassifier(features_train, labels_train, clf_type, clf_params)
+        clf, params, exp_var = trainTestClassifier(features_train, labels_train, clf_type, clf_params)
         pred = clf.predict(features_test)
         f1 = f1_score(labels_test, pred)
         recall = recall_score(labels_test, pred)

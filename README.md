@@ -12,21 +12,63 @@ Upon initial exploration of the dataset, I came across two very strange outliers
 
 ## Features
 
-As previously mentioned, there are 20 features in the dataset corresponding to 2 main broad categories: financial features and email features. Like the names imply, financial features captures various financial aspects of Enron employees including salary, bonuses, stock options, etc. whereas the other main group of features revolve around email aggregate statistics such as emails sent, received, recipients that are POIs, etc. As part of my exploration, I constructed an additional feature that highlights the bivariate relationship between bonus and salary. The reasoning is that a higher bonus coupled with a low salary might signify some shady transactions since you would normally expect a bonus received to be roughly proportional to the employee's salary. A high bonus might mean they were getting paid off by someone and could be an indirect sign of corruption within the company. Ultimately, the addition of this feature had no observable change in the precision or recall performance of any of the three classifiers tested.
+As previously mentioned, there are 20 features in the dataset corresponding to 2 main broad categories: financial features and email features. Like the names imply, financial features captures various financial aspects of Enron employees including salary, bonuses, stock options, etc. whereas the other main group of features revolve around email aggregate statistics such as emails sent, received, recipients that are POIs, etc. As part of my exploration, I constructed an additional feature that highlights the bivariate relationship between bonus and salary. The reasoning is that a higher bonus coupled with a low salary might signify some shady transactions since you would normally expect a bonus received to be roughly proportional to the employee's salary. A high bonus might mean they were getting paid off by someone and could be an indirect sign of corruption within the company. As part of the final model analysis, this feature's presence will be tested.
 
 After creating the additional bonus to salary ratio feature, I preprocessed the data to reduce its dimensionality in order to reduce variance to the data. The method I used was principal component analysis which is great for reducing highly dimensional data by reducing features to projections that cover the most variance in the dataset per "feature". From the 21 total features, I was able to create 11 principal components for my final model. For the algorithms I would eventually apply, feature scaling would not be appropriate. Naive Bayes and Logistic Regression do not respond algorithmically to scaling in the data and while it does matter for RBF variants of SVMs, the linear one I use does not require it.
 
 ## Algorithm Selection and Tuning
 
-Prior to looking at the model creation process, the importance of algorithm selection and tuning must be noted. Machine learning algorithms are highly parameterized in that they allow many modifications to create an optimal learning process. An optimal classifier would be one that most effectively explains the dataset with the least amount of resources. This is precisely what parameter tuning allows us to do by modifying a base algorithm to fit the unique data better while still retaining the ability to abstract to unseen data. A well tuned model that has a good balance of learning and generalizing will be more useful for gaining insights into a dataset and answering questions. 
-
-To create the model, I initially started with three different algorithms: Naive Bayes (Gaussian), Logistic Regression, and a Linear SVM. In order to tune these algorithms, I used Sklearn's `GridSearchCV()` function which allowed me to tune the hyper parameters of these algorithms automatically with a stratified k-fold cross validation where k = 3. Surprisingly however, the algorithms showed very little change with "optimal" configurations compared to default runs.
-
-In fact, most of the variance in results came through manipulation of the PCA components. Performance was low for each algorithm without PCA as most of them would be in the low 20s for precision and recall. With PCA reducing the number of components to 11, the best *consistent* result was obtained from the Gaussian Naive Bayes which got an F1 score of 0.36337, Precision of .44198, and Recall of .30850.
+Prior to looking at the model creation process, the importance of algorithm selection and tuning must be noted. Machine learning algorithms are highly parameterized in that they allow many modifications to create an optimal learning process. An optimal classifier would be one that most effectively explains the dataset with the least amount of resources. This is precisely what parameter tuning allows us to do by modifying a base algorithm to fit the unique data better while still retaining the ability to abstract to unseen data. A well tuned model that has a good balance of learning and generalizing will be more useful for gaining insights into a dataset and answering questions.
 
 In the context of this investigation, the distinction between the evaluation metrics is important for contextualizing the performance of the algorithm. Recall gives us our ratio of correctly identifying POIs from the whole set of POIs. Precision in this case demonstrates how discriminant our algorithm was in identifying POIs i.e. for all people identified as POIs, what ratio of them were actually POIs? F1 score is a useful "average" of these two and was the basis for my comparisons of performance among the 3 chosen algorithms.
 
-Given that the highest performing algorithm was the Naive Bayes classifier, there was not really an opportunity to further tune it as the only real way to would be to incorporate priors into which is not known unfortunately. Since there was not much to be done with regards to improving the Naive Bayes approach, I was able to tune the remaining algorithms using the aforementioned strategy of k-fold cross validation in the `GridSearchCV` function. This step is crucial for assessing performance as it serves as a check on "overtuning" these algorithms to the training data. This would negatively impact its ability to generalize to unseen information. Various methods of cross validation alleviate this issue by cleverly increasing the amount of testing data used in total to train the algorithm by splitting it into k-folds (in my case, 3 folds!)
+In addition to our evaluation metrics, once an algorithm is chosen, we must note the importance of validation in accurately assessing our results. validation is the process in which we estimate how well our model has been trained. Without validation, the results of algorithm and parameters choices can still overfit to a simple hold out testing method and create misleading results regarding the accuracy of the model. There are a number of methods to get around this however. For our purposes, a stratified shuffle split is good because we're dealing with a very imbalanced POI distribution and so we want to ensure similar percentages of our target label in each of the splits (Note: this can be why accuracy as a metric can fail/be misleading since it might just classify everything as *not* being the target label since that is what it most likely come across)
+
+To create the model, I initially started with three different algorithms: Naive Bayes (Gaussian), Logistic Regression, and a Linear SVM. In order to tune these algorithms, I used Sklearn's `GridSearchCV()` function which allowed me to tune the hyper parameters of these algorithms automatically with a stratified k-fold cross validation where k = 3. In addition to running the grid search over various values for the algorithms' hyper parameters, I ran a grid search with a varying number of PCA components in order to get the optimal number of feature components along with the optimal parameters.
+
+
+With the F1 score metric in mind, I graphed the F1 score of each tuned algorithm per number of PCA components to find the optimal feature set for each algorithm. In doing so, I would hopefully achieve the optimal combination of algorithm parameters and components that best maximize my F1 score evaluation metric. The results of this experimentation are as follows:
+
+![F1 Plot](f1.png)
+
+The graph points out some interesting results regarding the relative optimal performance of each algorithm. The linear SVM was distinctly the worst of the three whereas logistic regression and naive bayes exhibited similar behavior for lower number of components but eventually diverge as the components goes beyond 12. The obvious anomaly is the F1 score at 19 components for logistic regression with a whopping 0.45 which is well beyond the rest of scores. This outlier represents a curious spike in the score since the other two algorithms level off in performance as the number of components increases. Regardless, the score makes this algorithm/component combination a prime candidate for our final model.
+
+Since algorithm tuning was incorporated during the process of generating the above graph, no further tuning is necessary. The final recall and precision scores for the logistic regression algorithm was 0.60650 and 0.36525 respectively. Revisiting the created `bonus_to_salary` feature from earlier, we get minimal differences for precision and recall with and without it:
+
+|  | Recall | Precision
+|----------------------------------------------
+| With `bonus_to_salary`| 0.60650   | 0.36525
+| Without `bonus_to_salary` | 0.60100 | 0.36010
+
+The difference is small but shows an improvement nonetheless therefore suggesting that the ratio of bonuses to salary may have some influence in identifying POIs.
+
+Additionally, what we can also do is examine what the impact the choice of `n_components` has on explaining the variance in the data:   
+
+
+| Explained Variance |
+|--------------------|
+|2.17848839197e+14
+|2.16189569183e+13
+|2.41106386417e+12
+|2.19428600197e+12
+|765329499372.0
+|448655740555.0
+|204872099814.0
+|120155377992.0
+|47608037710.1
+|14331307839.2
+|2092502581.89
+|927567561.591
+|60391842.8264
+|3957295.0602
+|1695728.54777
+|110317.696855
+|1749.3021037
+|986.837647767
+|1.20817567333
+
+Inspecting the lowest ranked components, it's unknown how this variance table could produce such a large spike at 19 components compared to the surrounding F1 scores of 0.35 at 18 components and 0.36 at 20 components. While there is variability in every run of the algorithm, this result for 19 components has been fairly consistent.
+
 
 ## Conclusion
 
@@ -36,3 +78,4 @@ Overall, identifying POIs in this case has proven to be quite the challenge. As 
 
 * Udacity Intro to Machine Learning
 * [Sklearn Documentation](http://scikit-learn.org/stable/documentation.html)
+* [Validation/Testing](http://stats.stackexchange.com/questions/19048/what-is-the-difference-between-test-set-and-validation-set?noredirect=1&lq=1)
