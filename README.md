@@ -35,10 +35,10 @@ The graph points out some interesting results regarding the relative optimal per
 
 Since algorithm tuning was incorporated during the process of generating the above graph, no further tuning is necessary. The final recall and precision scores for the logistic regression algorithm was 0.60650 and 0.36525 respectively. Revisiting the created `bonus_to_salary` feature from earlier, we get minimal differences for precision and recall with and without it:
 
-|  | Recall | Precision
-|----------------------------------------------
-| With `bonus_to_salary`| 0.60650   | 0.36525
-| Without `bonus_to_salary` | 0.60100 | 0.36010
+|                         | Recall | Precision |
+|----------------------------------------------|
+| With `bonus_to_salary`| 0.60650   | 0.36525  |
+| Without `bonus_to_salary` | 0.60100 | 0.36010|
 
 The difference is small but shows an improvement nonetheless therefore suggesting that the ratio of bonuses to salary may have some influence in identifying POIs.
 
