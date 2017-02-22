@@ -16,13 +16,19 @@ As previously mentioned, there are 20 features in the dataset corresponding to 2
 
 After creating the additional bonus to salary ratio feature, I preprocessed the data to reduce its dimensionality in order to reduce variance to the data. The method I used was principal component analysis which is great for reducing highly dimensional data by reducing features to projections that cover the most variance in the dataset per "feature". From the 21 total features, I was able to create 19 principal components for my final model. For the algorithms I would eventually apply, feature scaling would not be appropriate. Naive Bayes and Logistic Regression do not respond algorithmically to scaling in the data and while it does matter for RBF variants of SVMs, the linear one I use does not require it.
 
-## Algorithm Selection and Tuning
+# Algorithm Selection and Tuning
+
+### Parameter Tuning Importance
 
 Prior to looking at the model creation process, the importance of algorithm selection and tuning must be noted. Machine learning algorithms are highly parameterized in that they allow many modifications to create an optimal learning process. An optimal classifier would be one that most effectively explains the dataset with the least amount of resources. This is precisely what parameter tuning allows us to do by modifying a base algorithm to fit the unique data better while still retaining the ability to abstract to unseen data. A well tuned model that has a good balance of learning and generalizing will be more useful for gaining insights into a dataset and answering questions.
 
 In the context of this investigation, the distinction between the evaluation metrics is important for contextualizing the performance of the algorithm. Recall gives us our ratio of correctly identifying POIs from the whole set of POIs. Precision in this case demonstrates how discriminant our algorithm was in identifying POIs i.e. for all people identified as POIs, what ratio of them were actually POIs? F1 score is a useful "average" of these two and was the basis for my comparisons of performance among the 3 chosen algorithms.
 
+### Validation Importance
+
 In addition to our evaluation metrics, once an algorithm is chosen, we must note the importance of validation in accurately assessing our results. validation is the process in which we estimate how well our model has been trained. Without validation, the results of algorithm and parameters choices can still overfit to a simple hold out testing method and create misleading results regarding the accuracy of the model. There are a number of methods to get around this however. For our purposes, a stratified shuffle split is good because we're dealing with a very imbalanced POI distribution and so we want to ensure similar percentages of our target label in each of the splits (Note: this can be why accuracy as a metric can fail/be misleading since it might just classify everything as *not* being the target label since that is what it most likely come across)
+
+### Model Creation
 
 To create the model, I initially started with three different algorithms: Naive Bayes (Gaussian), Logistic Regression, and a Linear SVM. In order to tune these algorithms, I used Sklearn's `GridSearchCV()` function which allowed me to tune the hyper parameters of these algorithms automatically with a stratified k-fold cross validation where k = 3. In addition to running the grid search over various values for the algorithms' hyper parameters, I ran a grid search with a varying number of PCA components in order to get the optimal number of feature components along with the optimal parameters.
 
